@@ -22,7 +22,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({ Key? key }) : super(key: key);
   
-
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -64,6 +63,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<List<SmsMessage>> fetchSMS() async {
-    messages = await Telephony.instance.getInboxSms();
+    messages = await Telephony.instance.getInboxSms(
+     filter:SmsFilter.where(SmsColumn.ADDRESS)
+				 .equals("MPESA")
+				 .or(SmsColumn.ADDRESS)
+         .equals("Equity Bank")
+         .or(SmsColumn.ADDRESS)
+         .equals("Safaricom")
+    );
     return messages;
   }}
