@@ -1,15 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart';
 
 import 'package:telephony/telephony.dart';
+import 'package:transp/constants.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox(Constants.boxName);
   runApp(const MyApp());
 }
-
 final navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
@@ -18,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Flutter Demo',
+        title: 'Tranpsport Stuff',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
@@ -38,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<SmsMessage> messages = [];
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
   }
 
@@ -48,6 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
         floatingActionButton: const FloatingActionButton(
             onPressed: sendMessagesToServer, child: Icon(Icons.send)),
         appBar: AppBar(
+          actions:const [
+            IconButton(
+              onPressed: changeURL,
+              icon: Icon(Icons.web_stories),
+            ),
+          ],
           title: const Text("Messages List"),
         ),
         body: FutureBuilder(
@@ -73,10 +85,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 });
           },
-        ));
+        ),);
   }
 
   Future<List<SmsMessage>> fetchSMS() async {
+    if(Platform.isAndroid){
     messages = await Telephony.instance.getInboxSms(
         filter: SmsFilter.where(SmsColumn.ADDRESS)
             .equals("MPESA")
@@ -84,14 +97,39 @@ class _MyHomePageState extends State<MyHomePage> {
             .equals("Equity Bank")
             .or(SmsColumn.ADDRESS)
             .equals("Safaricom"));
-
+    }else{
+      messages = [];
+    }
     return messages;
   }
 }
 
+void changeURL() {
+  var box = Hive.box(Constants.boxName);
+  var _controler = TextEditingController();
+  _controler.value = TextEditingValue(text:box.get(Constants.serverUrlStore,defaultValue:Constants.defaultUrl));
+  showModalBottomSheet<void>(
+    context:navigatorKey.currentContext!,
+    builder: (BuildContext ctx){
+      return SizedBox(
+        width:100,
+        height: 500,
+        child:Center(child:TextField(
+          controller:_controler,
+          onChanged: (String s){
+     box.put(Constants.serverUrlStore,s);
+          },
+  
+        )),
+      );
+    }
+    );
+ 
+}
 void sendMessagesToServer() async {
   //get messages
   List<Map<String, dynamic>> dataBlob = [];
+
   final messagesDump = await Telephony.instance
       .getInboxSms(filter: SmsFilter.where(SmsColumn.ADDRESS).equals("MPESA"));
   for (SmsMessage message in messagesDump) {
@@ -106,7 +144,9 @@ void sendMessagesToServer() async {
     dataBlob.add(messageDestructure);
   }
   try {
-    var response = await post(Uri.parse("http://192.168.0.26:9000/data"),
+    var box = Hive.box(Constants.boxName);
+    var serverUrl = box.get(Constants.serverUrlStore);
+    var response = await post(Uri.parse(serverUrl),
         headers: {
           "Accept": "application/json",
           "Content-type": "application/json",
@@ -131,5 +171,4 @@ void sendMessagesToServer() async {
       },
     );
   }
-
 }
