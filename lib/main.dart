@@ -9,11 +9,27 @@ import 'package:http/http.dart';
 
 import 'package:telephony/telephony.dart';
 import 'package:transp/constants.dart';
+import 'package:vibration/vibration.dart';
+dynamic backgroundMessageHandler(SmsMessage message) async {
+  Vibration.vibrate(duration:5000);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox(Constants.boxName);
+  Telephony.instance.listenIncomingSms(
+		onNewMessage: (SmsMessage message) {
+		 showCupertinoDialog(
+      context: navigatorKey.currentContext!,
+      builder: (BuildContext context) {
+        return AlertDialog(
+            title: const Text('Foreground Message : '), content: Text('${message.body} ${message.address}'));
+      },
+    );
+		},
+		onBackgroundMessage: backgroundMessageHandler
+	);
   runApp(const MyApp());
 }
 final navigatorKey = GlobalKey<NavigatorState>();
