@@ -23,7 +23,7 @@ jobs:
     - name: Fetching dependencies 🍂
       run: flutter pub get
     - name: Building arm apk 📚
-      run: flutter build apk --target-platform android-arm64
+      run: flutter build apk 
     - name: Making Zip file of the code🎁
       uses: actions/upload-artifact@v2
       with:
