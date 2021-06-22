@@ -108,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if(Platform.isAndroid){
     messages = await Telephony.instance.getInboxSms(
         filter: SmsFilter.where(SmsColumn.ADDRESS)
-            .equals("MPESA")
+            .equals("MPESA");
     }else{
       messages = [];
     }
