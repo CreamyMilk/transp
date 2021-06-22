@@ -11,7 +11,7 @@ import 'package:telephony/telephony.dart';
 import 'package:transp/constants.dart';
 import 'package:vibration/vibration.dart';
 dynamic backgroundMessageHandler(SmsMessage message) async {
-  Vibration.vibrate(duration:5000);
+  Vibration.vibrate(duration:2000);
 }
 
 void main() async {
@@ -108,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if(Platform.isAndroid){
     messages = await Telephony.instance.getInboxSms(
         filter: SmsFilter.where(SmsColumn.ADDRESS)
-            .equals("MPESA");
+            .equals("MPESA"));
     }else{
       messages = [];
     }
