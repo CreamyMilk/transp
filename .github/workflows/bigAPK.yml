@@ -1,9 +1,7 @@
-# This is a basic workflow to help you get started with Actions
+# This workflow create the universal apk
 
-name: tinyAPK
+name: bigAPK
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the main branch
 on:
   push:
     branches: [ main ]
@@ -22,11 +20,11 @@ jobs:
 
     - name: Fetching dependencies 🍂
       run: flutter pub get
-    - name: Building arm apk 📚
-      run: flutter build apk --target-platform android-arm64
+    - name: Building BIG apk 📚
+      run: flutter build apk 
     - name: Making Zip file of the code🎁
       uses: actions/upload-artifact@v2
       with:
-        name: tinyAPK
+        name: bigAPK
         path: build/app/outputs/flutter-apk/app-release.apk
         retention-days: 1

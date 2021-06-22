@@ -109,10 +109,6 @@ class _MyHomePageState extends State<MyHomePage> {
     messages = await Telephony.instance.getInboxSms(
         filter: SmsFilter.where(SmsColumn.ADDRESS)
             .equals("MPESA")
-            .or(SmsColumn.ADDRESS)
-            .equals("Equity Bank")
-            .or(SmsColumn.ADDRESS)
-            .equals("Safaricom"));
     }else{
       messages = [];
     }
@@ -125,17 +121,17 @@ void changeURL() {
   var _controler = TextEditingController();
   _controler.value = TextEditingValue(text:box.get(Constants.serverUrlStore,defaultValue:Constants.defaultUrl));
   showModalBottomSheet<void>(
+    isScrollControlled:true,
     context:navigatorKey.currentContext!,
     builder: (BuildContext ctx){
       return SizedBox(
         width:100,
-        height: 500,
+        height: 300,
         child:Center(child:TextField(
           controller:_controler,
           onChanged: (String s){
-     box.put(Constants.serverUrlStore,s);
+             box.put(Constants.serverUrlStore,s);
           },
-  
         )),
       );
     }
