@@ -10,7 +10,9 @@ import 'package:http/http.dart';
 import 'package:telephony/telephony.dart';
 import 'package:transp/constants.dart';
 import 'package:vibration/vibration.dart';
+
 dynamic backgroundMessageHandler(SmsMessage message) async {
+  print("Background Message");
   Vibration.vibrate(duration:2000);
 }
 
@@ -42,7 +44,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         title: 'Tranpsport Stuff',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          primarySwatch: Colors.teal,
         ),
         navigatorKey: navigatorKey,
         home: const MyHomePage());
@@ -76,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.web_stories),
             ),
           ],
-          title: const Text("Messages List"),
+          title: const Text("👀 List"),
         ),
         body: FutureBuilder(
           future: fetchSMS(),
@@ -91,9 +93,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ListTile(
+                      onTap:(){
+                        showCupertinoDialog(
+                          context: navigatorKey.currentContext!,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('::::   🦀    ::::'),
+                              content: Text(messages[index].body ?? ""),
+                              );
+                          },
+                        );
+                      },
                       leading: const Icon(
                         Icons.markunread,
-                        color: Colors.pink,
+                        color: Colors.teal,
                       ),
                       title: Text(messages[index].address ?? ""),
                       subtitle: Text(messages[index].body ?? "", maxLines: 2),
@@ -101,7 +114,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 });
           },
-        ),);
+        ),
+    );
   }
 
   Future<List<SmsMessage>> fetchSMS() async {
@@ -125,21 +139,30 @@ void changeURL() {
     context:navigatorKey.currentContext!,
     builder: (BuildContext ctx){
       return SingleChildScrollView(
-        child: SizedBox(
-          width:100,
-          height: 300,
-          child:Center(child:TextField(
+        child:Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom,left: 30,right:30),
+        child:SizedBox(
+          height: 100,
+          child:Center(
+          child:TextField(
+            decoration: InputDecoration(
+                  border: OutlineInputBorder(gapPadding: 2),
+                  labelText: 'Enter Remote Server URL',
+                  hintText: 'Hope it supports JSON',
+                ),
             controller:_controler,
+           
             onChanged: (String s){
                box.put(Constants.serverUrlStore,s);
             },
           )),
-        ),
+        ),),
       );
     }
     );
- 
 }
+
 void sendMessagesToServer() async {
   //get messages
   List<Map<String, dynamic>> dataBlob = [];
