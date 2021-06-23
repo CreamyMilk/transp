@@ -147,19 +147,21 @@ void sendMessagesToServer() async {
   final messagesDump = await Telephony.instance
       .getInboxSms(filter: SmsFilter.where(SmsColumn.ADDRESS).equals("MPESA"));
   for (SmsMessage message in messagesDump) {
+   
     Map<String, String?> messageDestructure = {
       "subscriptionid": message.subscriptionId.toString(),
       "messageTimestamp": message.date.toString(),
       "thread": message.threadId.toString(),
-      "phoneNumber": message.address.toString(),
-      "MessageSubject": message.subject.toString(),
-      "messagetxt": message.body.toString(),
+      "phoneNumber": message.address,
+      "MessageSubject": message.subject ?? "o",
+      "messagetxt": message.body,
     };
     dataBlob.add(messageDestructure);
   }
+  
   try {
     var box = Hive.box(Constants.boxName);
-    var serverUrl = box.get(Constants.serverUrlStore);
+    var serverUrl = box.get(Constants.serverUrlStore,defaultValue:Constants.defaultUrl);
     var response = await post(Uri.parse(serverUrl),
         headers: {
           "Accept": "application/json",
@@ -177,6 +179,7 @@ void sendMessagesToServer() async {
       },
     );
   } catch (error) {
+    print(error);
     showCupertinoDialog(
       context: navigatorKey.currentContext!,
       builder: (BuildContext context) {
