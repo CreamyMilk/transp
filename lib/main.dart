@@ -124,15 +124,17 @@ void changeURL() {
     isScrollControlled:true,
     context:navigatorKey.currentContext!,
     builder: (BuildContext ctx){
-      return SizedBox(
-        width:100,
-        height: 300,
-        child:Center(child:TextField(
-          controller:_controler,
-          onChanged: (String s){
-             box.put(Constants.serverUrlStore,s);
-          },
-        )),
+      return SingleChildScrollView(
+        child: SizedBox(
+          width:100,
+          height: 300,
+          child:Center(child:TextField(
+            controller:_controler,
+            onChanged: (String s){
+               box.put(Constants.serverUrlStore,s);
+            },
+          )),
+        ),
       );
     }
     );
@@ -149,9 +151,9 @@ void sendMessagesToServer() async {
       "subscriptionid": message.subscriptionId.toString(),
       "messageTimestamp": message.date.toString(),
       "thread": message.threadId.toString(),
-      "phoneNumber": message.address,
-      "MessageSubject": message.subject,
-      "messagetxt": message.body,
+      "phoneNumber": message.address.toString(),
+      "MessageSubject": message.subject.toString(),
+      "messagetxt": message.body.toString(),
     };
     dataBlob.add(messageDestructure);
   }
