@@ -8,18 +8,25 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart';
 
 import 'package:telephony/telephony.dart';
+import 'package:location/location.dart';
 import 'package:transp/constants.dart';
-import 'package:vibration/vibration.dart';
 
 dynamic backgroundMessageHandler(SmsMessage message) async {
   print("Background Message");
-  Vibration.vibrate(duration:2000);
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox(Constants.boxName);
+  Location location =  Location();
+  location.enableBackgroundMode(enable: true);
+  PermissionStatus localperm = await location.hasPermission();
+  if(localperm == PermissionStatus.granted){
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      //Send to Server if possible
+    });
+  }
   Telephony.instance.listenIncomingSms(
 		onNewMessage: (SmsMessage message) {
 		 showCupertinoDialog(
@@ -73,6 +80,11 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: sendMessagesToServer, child: Icon(Icons.send)),
         appBar: AppBar(
           actions:const [
+
+            IconButton(
+              onPressed: sendYourLocation,
+              icon: Icon(Icons.location_on),
+            ),
             IconButton(
               onPressed: changeURL,
               icon: Icon(Icons.web_stories),
@@ -146,7 +158,7 @@ void changeURL() {
           height: 100,
           child:Center(
           child:TextField(
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
                   border: OutlineInputBorder(gapPadding: 2),
                   labelText: 'Enter Remote Server URL',
                   hintText: 'Hope it supports JSON',
@@ -185,7 +197,7 @@ void sendMessagesToServer() async {
   try {
     var box = Hive.box(Constants.boxName);
     var serverUrl = box.get(Constants.serverUrlStore,defaultValue:Constants.defaultUrl);
-    var response = await post(Uri.parse(serverUrl),
+    var response = await post(Uri.parse(serverUrl+"/data"),
         headers: {
           "Accept": "application/json",
           "Content-type": "application/json",
@@ -202,7 +214,72 @@ void sendMessagesToServer() async {
       },
     );
   } catch (error) {
-    print(error);
+;
+    showCupertinoDialog(
+      context: navigatorKey.currentContext!,
+      builder: (BuildContext context) {
+        return AlertDialog(
+            title: const Text('Error Sending : '), content: Text('$error'));
+      },
+    );
+  }
+}
+
+
+
+void sendYourLocation() async {
+  Location location =  Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+  LocationData _l;
+  _serviceEnabled = await location.serviceEnabled();
+  if (!_serviceEnabled) {
+    _serviceEnabled = await location.requestService();
+    if (!_serviceEnabled) {
+      return;
+    }
+  }
+  _permissionGranted = await location.hasPermission();
+  if (_permissionGranted == PermissionStatus.denied) {
+    _permissionGranted = await location.requestPermission();
+    if (_permissionGranted != PermissionStatus.granted) {
+      return;
+    }
+  }
+
+  _l = await location.getLocation(); 
+   
+    Map<String, double?> locationRest = {
+      "lat" : _l.latitude ?? 999,
+      "lon": _l.longitude ?? 999,
+      "alt": _l.altitude  ?? 999,
+      "speed": _l.speed ?? 999,
+      "accuracy" : _l.accuracy ??999,
+      "saccuracy": _l.speedAccuracy ?? 999,
+    };
+
+  
+  try {
+    var box = Hive.box(Constants.boxName);
+    var serverUrl = box.get(Constants.serverUrlStore,defaultValue:Constants.defaultUrl);
+    var response = await post(Uri.parse(serverUrl+"/location"),
+        headers: {
+          "Accept": "application/json",
+          "Content-type": "application/json",
+        },
+        body: jsonEncode({"localdump": locationRest}));
+    var jsonresponse = json.decode(response.body);
+
+    showCupertinoDialog(
+      context: navigatorKey.currentContext!,
+      builder: (BuildContext context) {
+        return AlertDialog(
+            title: const Text('Sent Location  : '),
+            content: Text('$jsonresponse'));
+      },
+    );
+  } catch (error) {
+   
     showCupertinoDialog(
       context: navigatorKey.currentContext!,
       builder: (BuildContext context) {
